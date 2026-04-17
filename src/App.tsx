@@ -90,6 +90,23 @@ export default function App() {
     Prism.highlightAll();
   }, [currentLesson, viewMode]);
 
+  useEffect(() => {
+    const handleGlobalShortcuts = (e: KeyboardEvent) => {
+      // Ctrl/Cmd + 1 or 2
+      if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey) {
+        if (e.key === '1') {
+          e.preventDefault();
+          setViewMode('learn');
+        } else if (e.key === '2') {
+          e.preventDefault();
+          setViewMode('playground');
+        }
+      }
+    };
+    window.addEventListener('keydown', handleGlobalShortcuts);
+    return () => window.removeEventListener('keydown', handleGlobalShortcuts);
+  }, []);
+
   const handlePlaygroundChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const value = e.target.value;
     setPlaygroundCode(value);
@@ -287,6 +304,7 @@ export default function App() {
           <div className="flex gap-2">
             <button 
               onClick={() => setViewMode('learn')}
+              title="Cours (Ctrl+1)"
               className={`flex-1 flex flex-col items-center justify-center p-2 rounded-lg transition-all border ${
                 viewMode === 'learn' ? 'bg-indigo-600/10 border-indigo-500 text-indigo-400' : 'border-transparent text-gray-500 hover:text-gray-300'
               }`}
@@ -296,6 +314,7 @@ export default function App() {
             </button>
             <button 
               onClick={() => setViewMode('playground')}
+              title="Playground (Ctrl+2)"
               className={`flex-1 flex flex-col items-center justify-center p-2 rounded-lg transition-all border ${
                 viewMode === 'playground' ? 'bg-indigo-600/10 border-indigo-500 text-indigo-400' : 'border-transparent text-gray-500 hover:text-gray-300'
               }`}
