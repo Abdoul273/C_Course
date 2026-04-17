@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect } from 'react';
-import { CURRICULUM, Lesson } from './constants';
+import React, { useState, useRef, useEffect } from 'react';
+import { CURRICULUM, Lesson, C_KEYWORDS } from './constants';
 import { 
   BookOpen, 
   MessageSquare, 
@@ -72,6 +72,11 @@ export default function App() {
   const [isRunning, setIsRunning] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
 
+  // Autocomplete state
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [suggestionIndex, setSuggestionIndex] = useState(0);
+  const playgroundRef = useRef<HTMLTextAreaElement>(null);
+
   useEffect(() => {
     const saved = localStorage.getItem('c-master-progress');
     if (saved) setCompletedLessons(JSON.parse(saved));
@@ -85,6 +90,68 @@ export default function App() {
     Prism.highlightAll();
   }, [currentLesson, viewMode]);
 
+  const handlePlaygroundChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const value = e.target.value;
+    setPlaygroundCode(value);
+    
+    const cursorPosition = e.target.selectionStart;
+    const textBeforeCursor = value.substring(0, cursorPosition);
+    const lastWord = textBeforeCursor.split(/[\s\(\[\{\}\]\);,.]+/).pop() || "";
+    
+    if (lastWord.length >= 2) {
+      const filtered = C_KEYWORDS.filter(k => k.startsWith(lastWord) && k !== lastWord);
+      setSuggestions(filtered);
+      setSuggestionIndex(0);
+    } else {
+      setSuggestions([]);
+    }
+  };
+
+  const insertSuggestion = (suggestion: string) => {
+    if (!playgroundRef.current) return;
+    
+    const textarea = playgroundRef.current;
+    const cursorPosition = textarea.selectionStart;
+    const value = playgroundCode;
+    
+    const textBeforeCursor = value.substring(0, cursorPosition);
+    const textAfterCursor = value.substring(cursorPosition);
+    
+    const lastWordMatch = textBeforeCursor.match(/[\w.]+$/);
+    const lastWord = lastWordMatch ? lastWordMatch[0] : "";
+    
+    const newValue = 
+      textBeforeCursor.substring(0, textBeforeCursor.length - lastWord.length) + 
+      suggestion + 
+      textAfterCursor;
+      
+    setPlaygroundCode(newValue);
+    setSuggestions([]);
+    
+    // Position cursor after inserted word
+    setTimeout(() => {
+      const newPos = cursorPosition - lastWord.length + suggestion.length;
+      textarea.setSelectionRange(newPos, newPos);
+      textarea.focus();
+    }, 0);
+  };
+
+  const handleEditorKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (suggestions.length > 0) {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setSuggestionIndex(prev => (prev + 1) % suggestions.length);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setSuggestionIndex(prev => (prev - 1 + suggestions.length) % suggestions.length);
+      } else if (e.key === 'Enter' || e.key === 'Tab') {
+        e.preventDefault();
+        insertSuggestion(suggestions[suggestionIndex]);
+      } else if (e.key === 'Escape') {
+        setSuggestions([]);
+      }
+    }
+  };
   const toggleComplete = (id: string) => {
     setCompletedLessons(prev => 
       prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
@@ -615,12 +682,36 @@ export default function App() {
                      ))}
                    </div>
                    <textarea 
+                    ref={playgroundRef}
                     value={playgroundCode}
-                    onChange={(e) => setPlaygroundCode(e.target.value)}
+                    onChange={handlePlaygroundChange}
+                    onKeyDown={handleEditorKeyDown}
                     spellCheck={false}
                     className="absolute inset-0 pl-16 pr-8 pt-8 font-mono text-base bg-transparent border-none focus:ring-0 text-indigo-300 resize-none leading-6 h-full w-full z-20 custom-scrollbar scroll-smooth"
                     placeholder="// Écrivez votre code C maître ici..."
                   />
+                  
+                  {/* Suggestions Popover */}
+                  <AnimatePresence>
+                    {suggestions.length > 0 && (
+                      <motion.div 
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0 }}
+                        className="absolute z-50 left-16 bottom-8 bg-[#1c2128] border border-gray-700 rounded-lg shadow-2xl overflow-hidden min-w-[150px]"
+                      >
+                        {suggestions.map((s, i) => (
+                          <button
+                            key={s}
+                            onClick={() => insertSuggestion(s)}
+                            className={`w-full text-left px-4 py-2 text-xs font-mono transition-colors ${i === suggestionIndex ? 'bg-indigo-600 text-white' : 'text-gray-400 hover:bg-gray-800'}`}
+                          >
+                            {s}
+                          </button>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               </div>
 

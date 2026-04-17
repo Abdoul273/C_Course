@@ -12,7 +12,7 @@ export const CURRICULUM: Lesson[] = [
     id: "intro",
     title: "Introduction au C",
     category: "Bases",
-    content: "Le C est un langage impératif de bas niveau. Il offre un contrôle total sur le matériel et la mémoire. C'est la base de la plupart des systèmes d'exploitation modernes (Linux, Windows, macOS).",
+    content: "Le langage C est un langage de programmation impératif et polyvalent. Créé au début des années 1970, il reste l'un des langages les plus utilisés pour les systèmes d'exploitation et les applications bas niveau.",
     codeExample: "#include <stdio.h>\n\nint main() {\n    printf(\"Hello, World!\\n\");\n    return 0;\n}"
   },
   {
@@ -242,4 +242,12 @@ int main() {
     content: "Séparer l'interface (.h) de l'implémentation (.c) pour les grands projets.",
     codeExample: "#ifndef HEADER_H\n#define HEADER_H\n...\n#endif"
   }
+];
+
+export const C_KEYWORDS = [
+  "auto", "break", "case", "char", "const", "continue", "default", "do",
+  "double", "else", "enum", "extern", "float", "for", "goto", "if",
+  "int", "long", "register", "return", "short", "signed", "sizeof", "static",
+  "struct", "switch", "typedef", "union", "unsigned", "void", "volatile", "while",
+  "printf", "scanf", "include", "define", "main", "stdio.h", "stdlib.h", "math.h", "string.h"
 ];
